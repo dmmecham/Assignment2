@@ -1,6 +1,8 @@
 @startuml
 skinparam classAttributeIconSize 0
 
+title Audio Synthesizer
+
 '=========================
 ' Interfaces
 '=========================
@@ -8,6 +10,7 @@ skinparam classAttributeIconSize 0
 interface AudioChannel {
     +generate(song: Song, duration: Double): DoubleArray
     +getDuration(song: Song): Double
+    +getNoteBoundaries(song: Song): List<Triple<Int,Int,Int>>
 }
 
 interface Waveform {
@@ -19,53 +22,55 @@ interface Waveform {
 '=========================
 
 class Song {
-    +sampleRate: Int
-    +beatsPerMeasure: Int
-    +tempo: Int
-    +channels: List<AudioChannel>
+    +sampleRate : Int
+    +beatsPerMeasure : Int
+    +tempo : Int
+    +channels : List<AudioChannel>
 }
 
 class SoundChannel {
-    -waveform: Waveform
-    -measures: List<String>
+    -waveform : Waveform
+    -measures : List<String>
 }
 
 class SoundSynthesis {
-    -song: Song
-    +synthesize(): DoubleArray
-    +play()
+    -song : Song
+    +synthesize() : DoubleArray
+    +play() : Unit
 }
 
-class NoteFrequency
+class NoteFrequency {
+    +frequency(note:String) : Double?
+}
 
 '=========================
 ' Decorators
 '=========================
 
 class VolumeDecorator {
-    -channel: AudioChannel
-    -level: Double
+    -channel : AudioChannel
+    -level : Double
 }
 
 class AttackDecaySustainDecorator {
-    -channel: AudioChannel
-    -attackEnd: Double
-    -decayEnd: Double
-    -sustain: Double
+    -channel : AudioChannel
+    -attackEnd : Double
+    -decayEnd : Double
+    -sustain : Double
 }
 
 class ClipDistortionDecorator {
-    -channel: AudioChannel
-    -threshold: Double
+    -channel : AudioChannel
+    -threshold : Double
 }
 
 class TanhDistortionDecorator {
-    -channel: AudioChannel
-    -drive: Double
+    -channel : AudioChannel
+    -drive : Double
 }
 
 '=========================
-' Strategy Implementations
+' Strategy Pattern
 '=========================
 
 class SineWaveStrategy
@@ -78,11 +83,11 @@ class WhiteNoiseStrategy
 '=========================
 
 class WaveformFactory <<factory>> {
-    +create(type: String): Waveform
+    +create(type:String) : Waveform
 }
 
 class EffectFactory <<factory>> {
-    +create(effect: String, channel: AudioChannel): AudioChannel
+    +create(effect:String, channel:AudioChannel) : AudioChannel
 }
 
 '=========================
@@ -95,16 +100,17 @@ SoundSynthesis --> Song
 
 SoundChannel ..|> AudioChannel
 SoundChannel --> Waveform
+SoundChannel --> NoteFrequency
 
 VolumeDecorator ..|> AudioChannel
 AttackDecaySustainDecorator ..|> AudioChannel
 ClipDistortionDecorator ..|> AudioChannel
 TanhDistortionDecorator ..|> AudioChannel
 
-VolumeDecorator --> AudioChannel
-AttackDecaySustainDecorator --> AudioChannel
-ClipDistortionDecorator --> AudioChannel
-TanhDistortionDecorator --> AudioChannel
+VolumeDecorator --> AudioChannel : decorates
+AttackDecaySustainDecorator --> AudioChannel : decorates
+ClipDistortionDecorator --> AudioChannel : decorates
+TanhDistortionDecorator --> AudioChannel : decorates
 
 WaveformFactory ..> Waveform
 EffectFactory ..> AudioChannel
@@ -114,6 +120,12 @@ SquareWaveStrategy ..|> Waveform
 SawWaveStrategy ..|> Waveform
 WhiteNoiseStrategy ..|> Waveform
 
-SoundChannel --> NoteFrequency
+note right of Waveform
+<<Strategy>>
+end note
+
+note right of AudioChannel
+<<Decorator>>
+end note
 
 @enduml
