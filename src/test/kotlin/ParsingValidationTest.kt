@@ -300,4 +300,222 @@ sin reverb$0.5|C4 1
             File(filename).delete()
         }
     }
+    
+    @Test
+    fun testRejectVolumeWithExtraParameters() {
+        val content = """
+44100 4 120
+sin vol${'$'}0.5${'$'}extra|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            assertFailsWith<EffectSyntaxException>("Should reject volume with extra parameters") {
+                readSong(filename)
+            }
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testRejectClipWithExtraParameters() {
+        val content = """
+44100 4 120
+sin clip${'$'}0.8${'$'}extra|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            assertFailsWith<EffectSyntaxException>("Should reject clip with extra parameters") {
+                readSong(filename)
+            }
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testRejectTanhWithExtraParameters() {
+        val content = """
+44100 4 120
+sin tanh${'$'}5${'$'}extra|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            assertFailsWith<EffectSyntaxException>("Should reject tanh with extra parameters") {
+                readSong(filename)
+            }
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testRejectADSWithWrongParameterCount() {
+        val content = """
+44100 4 120
+sin ads${'$'}0.01${'$'}0.2|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            assertFailsWith<EffectSyntaxException>("Should reject ADS with missing sustain") {
+                readSong(filename)
+            }
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testRejectClipWithNegativeThreshold() {
+        val content = """
+44100 4 120
+sin clip${'$'}-0.5|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            assertFailsWith<EffectSyntaxException>("Should reject clip with negative threshold") {
+                readSong(filename)
+            }
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testRejectClipWithZeroThreshold() {
+        val content = """
+44100 4 120
+sin clip${'$'}0|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            assertFailsWith<EffectSyntaxException>("Should reject clip with zero threshold") {
+                readSong(filename)
+            }
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testRejectTanhWithNegativeDrive() {
+        val content = """
+44100 4 120
+sin tanh${'$'}-5|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            assertFailsWith<EffectSyntaxException>("Should reject tanh with negative drive") {
+                readSong(filename)
+            }
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testRejectTanhWithZeroDrive() {
+        val content = """
+44100 4 120
+sin tanh${'$'}0|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            assertFailsWith<EffectSyntaxException>("Should reject tanh with zero drive") {
+                readSong(filename)
+            }
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testRejectVolumeWithNegativeLevel() {
+        val content = """
+44100 4 120
+sin vol${'$'}-0.5|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            assertFailsWith<EffectSyntaxException>("Should reject volume with negative level") {
+                readSong(filename)
+            }
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testAcceptValidVolumeLevel() {
+        val content = """
+44100 4 120
+sin vol${'$'}0.8|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            val song = readSong(filename)
+            assertTrue(song.channels.isNotEmpty())
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testAcceptVolumeLevelAboveOne() {
+        val content = """
+44100 4 120
+sin vol${'$'}2.5|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            // Values above 1.0 are allowed (can amplify)
+            val song = readSong(filename)
+            assertTrue(song.channels.isNotEmpty())
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testAcceptValidClipThreshold() {
+        val content = """
+44100 4 120
+sin clip${'$'}0.8|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            val song = readSong(filename)
+            assertTrue(song.channels.isNotEmpty())
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testAcceptValidTanhDrive() {
+        val content = """
+44100 4 120
+sin tanh${'$'}5|C4 1
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            val song = readSong(filename)
+            assertTrue(song.channels.isNotEmpty())
+        } finally {
+            File(filename).delete()
+        }
+    }
 }

@@ -1,4 +1,5 @@
 import java.io.File
+import kotlin.system.exitProcess
 
 fun validateMeasure(measure: String, measureIdx: Int) {
     val tokens = measure.trim().split(Regex("\\s+"))
@@ -191,13 +192,13 @@ fun main(args: Array<String>) {
         println("Playback complete!")
     } catch (e: SongParsingException) {
         System.err.println("Error: ${e.message}")
-        System.exit(1)
+        exitProcess(1)
     } catch (e: SynthesizerException) {
         System.err.println("Synthesizer error: ${e.message}")
-        System.exit(1)
+        exitProcess(1)
     } catch (e: Exception) {
         System.err.println("Unexpected error: ${e.message}")
         e.printStackTrace()
-        System.exit(1)
+        exitProcess(1)
     }
 }

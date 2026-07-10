@@ -6,17 +6,45 @@ object EffectFactory {
         
         return when (effectType) {
             "vol" -> {
-                val level = parts.getOrNull(1)?.toDoubleOrNull() 
-                    ?: throw EffectSyntaxException(effectString, "volume requires level parameter")
+                // Validate parameter count: vol$level (exactly 2 parts total)
+                if (parts.size != 2) {
+                    throw EffectSyntaxException(
+                        effectString, 
+                        "volume takes exactly 1 parameter (level), but got ${parts.size - 1}"
+                    )
+                }
+                
+                val level = parts[1].toDoubleOrNull() 
+                    ?: throw EffectSyntaxException(effectString, "volume level must be a valid number")
+                
+                // Validate level is sensible (not NaN, not infinite)
+                if (level.isNaN()) {
+                    throw EffectSyntaxException(effectString, "volume level cannot be NaN")
+                }
+                if (level.isInfinite()) {
+                    throw EffectSyntaxException(effectString, "volume level cannot be infinite")
+                }
+                if (level < 0.0) {
+                    throw EffectSyntaxException(effectString, "volume level must be non-negative")
+                }
+                
                 VolumeDecorator(channel, level)
             }
             "ads" -> {
-                val attackEnd = parts.getOrNull(1)?.toDoubleOrNull() 
-                    ?: throw EffectSyntaxException(effectString, "attack-decay-sustain requires attackEnd parameter")
-                val decayEnd = parts.getOrNull(2)?.toDoubleOrNull() 
-                    ?: throw EffectSyntaxException(effectString, "attack-decay-sustain requires decayEnd parameter")
-                val sustain = parts.getOrNull(3)?.toDoubleOrNull() 
-                    ?: throw EffectSyntaxException(effectString, "attack-decay-sustain requires sustain parameter")
+                // Validate parameter count: ads$attackEnd$decayEnd$sustain (exactly 4 parts total)
+                if (parts.size != 4) {
+                    throw EffectSyntaxException(
+                        effectString,
+                        "attack-decay-sustain takes exactly 3 parameters (attackEnd, decayEnd, sustain), but got ${parts.size - 1}"
+                    )
+                }
+                
+                val attackEnd = parts[1].toDoubleOrNull() 
+                    ?: throw EffectSyntaxException(effectString, "attackEnd must be a valid number")
+                val decayEnd = parts[2].toDoubleOrNull() 
+                    ?: throw EffectSyntaxException(effectString, "decayEnd must be a valid number")
+                val sustain = parts[3].toDoubleOrNull() 
+                    ?: throw EffectSyntaxException(effectString, "sustain must be a valid number")
                 
                 try {
                     require(attackEnd >= 0.0) { "attackEnd must be >= 0" }
@@ -29,13 +57,53 @@ object EffectFactory {
                 AttackDecaySustainDecorator(channel, attackEnd, decayEnd, sustain)
             }
             "tanh" -> {
-                val drive = parts.getOrNull(1)?.toDoubleOrNull() 
-                    ?: throw EffectSyntaxException(effectString, "tanh distortion requires drive parameter")
+                // Validate parameter count: tanh$drive (exactly 2 parts total)
+                if (parts.size != 2) {
+                    throw EffectSyntaxException(
+                        effectString,
+                        "tanh distortion takes exactly 1 parameter (drive), but got ${parts.size - 1}"
+                    )
+                }
+                
+                val drive = parts[1].toDoubleOrNull() 
+                    ?: throw EffectSyntaxException(effectString, "tanh drive must be a valid number")
+                
+                // Validate drive is sensible (not NaN, not infinite, positive)
+                if (drive.isNaN()) {
+                    throw EffectSyntaxException(effectString, "tanh drive cannot be NaN")
+                }
+                if (drive.isInfinite()) {
+                    throw EffectSyntaxException(effectString, "tanh drive cannot be infinite")
+                }
+                if (drive <= 0.0) {
+                    throw EffectSyntaxException(effectString, "tanh drive must be positive")
+                }
+                
                 TanhDistortionDecorator(channel, drive)
             }
             "clip" -> {
-                val threshold = parts.getOrNull(1)?.toDoubleOrNull() 
-                    ?: throw EffectSyntaxException(effectString, "clip distortion requires threshold parameter")
+                // Validate parameter count: clip$threshold (exactly 2 parts total)
+                if (parts.size != 2) {
+                    throw EffectSyntaxException(
+                        effectString,
+                        "clip distortion takes exactly 1 parameter (threshold), but got ${parts.size - 1}"
+                    )
+                }
+                
+                val threshold = parts[1].toDoubleOrNull() 
+                    ?: throw EffectSyntaxException(effectString, "clip threshold must be a valid number")
+                
+                // Validate threshold is sensible (positive, not NaN, not infinite)
+                if (threshold.isNaN()) {
+                    throw EffectSyntaxException(effectString, "clip threshold cannot be NaN")
+                }
+                if (threshold.isInfinite()) {
+                    throw EffectSyntaxException(effectString, "clip threshold cannot be infinite")
+                }
+                if (threshold <= 0.0) {
+                    throw EffectSyntaxException(effectString, "clip threshold must be positive")
+                }
+                
                 ClipDistortionDecorator(channel, threshold)
             }
             else -> throw EffectSyntaxException(effectString, "unknown effect type '$effectType'")
