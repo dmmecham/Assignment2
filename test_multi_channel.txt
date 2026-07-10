@@ -1,0 +1,4 @@
+44100 4 120
+sin | C4 1 D4 1 E4 1 F4 1
+square vol$0.5 | G4 1 A4 1 B4 1 C5 1
+saw tanh$2 | - 1 - 1 - 1 - 1

@@ -1,0 +1,4 @@
+44100 8 140
+sin ads$0.05$0.2$0.3 vol$0.8 | A4 2 B4 2 C5 2 D5 2
+square clip$0.7 vol$0.6 | - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1
+whitenoise vol$0.2 tanh$3 | C4 1 - 1 D4 1 - 1 E4 1 - 1 F4 1 - 1
