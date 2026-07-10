@@ -109,7 +109,30 @@ fun readSong(filename: String): Song {
             }
             
             val settings = parts[0].trim().split(Regex("\\s+"))
-            val measures = parts.drop(1).map(String::trim).filter { it.isNotEmpty() }
+            
+            // Validate channel line structure strictly
+            // Parts after settings are measures - check for empty measures
+            val measureParts = parts.drop(1)
+            
+            // Remove trailing empty parts (from final |) which are allowed
+            val measurePartsWithoutTrailing = if (measureParts.isNotEmpty() && measureParts.last().trim().isEmpty()) {
+                measureParts.dropLast(1)
+            } else {
+                measureParts
+            }
+            
+            // Check for interior empty measures (caused by repeated pipes)
+            for ((measureIdx, measurePart) in measurePartsWithoutTrailing.withIndex()) {
+                val trimmed = measurePart.trim()
+                if (trimmed.isEmpty()) {
+                    throw ChannelSyntaxException(
+                        lineNum + 2,
+                        "malformed channel line: empty measure at position $measureIdx (caused by repeated || or invalid pipe placement)"
+                    )
+                }
+            }
+            
+            val measures = measurePartsWithoutTrailing.map(String::trim)
             
             if (settings.isEmpty()) {
                 throw ChannelSyntaxException(lineNum + 2, "missing waveform (first token in settings)")

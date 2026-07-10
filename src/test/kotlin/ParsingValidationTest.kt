@@ -197,15 +197,15 @@ sin|- 1 C4 1 - 2 D4 0.5
     }
     
     @Test
-    fun testRejectEmptyMeasure() {
+    fun testAcceptTrailingPipe() {
         val content = """
 44100 4 120
-sin| C4 1|
+sin|C4 1|
         """.trimIndent()
         
         val filename = createTempFile(content)
         try {
-            // Empty measures at end should be filtered, so this should be OK
+            // Trailing pipe is part of standard format - should be accepted
             val song = readSong(filename)
             assertTrue(song.channels.isNotEmpty())
         } finally {
@@ -214,17 +214,54 @@ sin| C4 1|
     }
     
     @Test
-    fun testRejectMultiplePipesCreateEmptyMeasure() {
+    fun testRejectInteriorEmptyMeasures() {
         val content = """
 44100 4 120
-sin|C4 1||D4 1
+sin|C4 1||D4 1|
         """.trimIndent()
         
         val filename = createTempFile(content)
         try {
-            // Double pipes create an empty measure in the middle which should be filtered
-            val song = readSong(filename)
-            assertTrue(song.channels.isNotEmpty())
+            // Double pipes create empty measure in middle - should be rejected
+            assertFailsWith<ChannelSyntaxException>("Should reject empty measure from double pipe") {
+                readSong(filename)
+            }
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testRejectLeadingDoubleStringPipes() {
+        val content = """
+44100 4 120
+sin||C4 1|
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            // Leading double pipe creates empty measure - should be rejected
+            assertFailsWith<ChannelSyntaxException>("Should reject leading double pipe") {
+                readSong(filename)
+            }
+        } finally {
+            File(filename).delete()
+        }
+    }
+    
+    @Test
+    fun testRejectWhitespaceOnlyInteriorMeasure() {
+        val content = """
+44100 4 120
+sin|C4 1|  |D4 1|
+        """.trimIndent()
+        
+        val filename = createTempFile(content)
+        try {
+            // Whitespace-only interior measure - should be rejected
+            assertFailsWith<ChannelSyntaxException>("Should reject whitespace-only measure") {
+                readSong(filename)
+            }
         } finally {
             File(filename).delete()
         }
