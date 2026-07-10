@@ -2,7 +2,6 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.assertEquals
 import kotlin.math.tanh
-import kotlin.math.abs
 
 class DecoratorTest {
     
@@ -48,8 +47,7 @@ class DecoratorTest {
         // Verify that the envelope is applied (samples get reduced at the start and end)
         val startSamples = samples.take(100)
         val midSamples = samples.drop(44100 / 4).take(100)
-        val endSamples = samples.takeLast(100)
-        
+
         // Start should increase during attack
         val startMax = startSamples.maxOrNull() ?: 0.0
         // Mid should be larger than start

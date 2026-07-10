@@ -2,8 +2,6 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 import kotlin.math.PI
-import kotlin.math.sin
-import kotlin.math.abs
 
 class WaveformTest {
     

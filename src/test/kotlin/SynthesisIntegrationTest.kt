@@ -27,7 +27,6 @@ sin | C4 1 D4 1
             val samples = synth.synthesize()
             
             // Should generate approximately 1 second of audio (2 beats at 120 BPM)
-            val expectedSamples = 44100 * (2.0 / 2.0) // 2 beats, each beat = 0.5 seconds
             assertTrue(samples.size > 20000, "Should generate enough samples")
             assertTrue(samples.all { it >= -1.0 && it <= 1.0 }, "All samples should be in [-1, 1] range")
         } finally {
