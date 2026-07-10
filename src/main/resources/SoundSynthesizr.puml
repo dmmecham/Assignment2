@@ -1,0 +1,119 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+'=========================
+' Interfaces
+'=========================
+
+interface AudioChannel {
+    +generate(song: Song, duration: Double): DoubleArray
+    +getDuration(song: Song): Double
+}
+
+interface Waveform {
+    +generate(frequency: Double, sampleRate: Int, phase: Double): Double
+}
+
+'=========================
+' Core Classes
+'=========================
+
+class Song {
+    +sampleRate: Int
+    +beatsPerMeasure: Int
+    +tempo: Int
+    +channels: List<AudioChannel>
+}
+
+class SoundChannel {
+    -waveform: Waveform
+    -measures: List<String>
+}
+
+class SoundSynthesis {
+    -song: Song
+    +synthesize(): DoubleArray
+    +play()
+}
+
+class NoteFrequency
+
+'=========================
+' Decorators
+'=========================
+
+class VolumeDecorator {
+    -channel: AudioChannel
+    -level: Double
+}
+
+class AttackDecaySustainDecorator {
+    -channel: AudioChannel
+    -attackEnd: Double
+    -decayEnd: Double
+    -sustain: Double
+}
+
+class ClipDistortionDecorator {
+    -channel: AudioChannel
+    -threshold: Double
+}
+
+class TanhDistortionDecorator {
+    -channel: AudioChannel
+    -drive: Double
+}
+
+'=========================
+' Strategy Implementations
+'=========================
+
+class SineWaveStrategy
+class SquareWaveStrategy
+class SawWaveStrategy
+class WhiteNoiseStrategy
+
+'=========================
+' Factories
+'=========================
+
+class WaveformFactory <<factory>> {
+    +create(type: String): Waveform
+}
+
+class EffectFactory <<factory>> {
+    +create(effect: String, channel: AudioChannel): AudioChannel
+}
+
+'=========================
+' Relationships
+'=========================
+
+Song "1" o-- "*" AudioChannel
+
+SoundSynthesis --> Song
+
+SoundChannel ..|> AudioChannel
+SoundChannel --> Waveform
+
+VolumeDecorator ..|> AudioChannel
+AttackDecaySustainDecorator ..|> AudioChannel
+ClipDistortionDecorator ..|> AudioChannel
+TanhDistortionDecorator ..|> AudioChannel
+
+VolumeDecorator --> AudioChannel
+AttackDecaySustainDecorator --> AudioChannel
+ClipDistortionDecorator --> AudioChannel
+TanhDistortionDecorator --> AudioChannel
+
+WaveformFactory ..> Waveform
+EffectFactory ..> AudioChannel
+
+SineWaveStrategy ..|> Waveform
+SquareWaveStrategy ..|> Waveform
+SawWaveStrategy ..|> Waveform
+WhiteNoiseStrategy ..|> Waveform
+
+SoundChannel --> NoteFrequency
+
+@enduml
