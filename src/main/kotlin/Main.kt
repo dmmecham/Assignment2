@@ -1,44 +1,102 @@
 import java.io.File
 
+fun validateMeasure(measure: String, measureIdx: Int) {
+    val tokens = measure.trim().split(Regex("\\s+"))
+    
+    if (tokens.isEmpty()) {
+        throw MeasureSyntaxException(measureIdx, "measure is empty")
+    }
+    
+    if (tokens.size % 2 != 0) {
+        throw MeasureSyntaxException(
+            measureIdx, 
+            "has ${tokens.size} tokens - must have even number (note/duration pairs)"
+        )
+    }
+    
+    var i = 0
+    while (i < tokens.size) {
+        val note = tokens[i]
+        val durationStr = tokens.getOrNull(i + 1) 
+            ?: throw MeasureSyntaxException(measureIdx, "missing duration after note '$note'")
+        
+        // Validate note format
+        validateNote(note)
+        
+        // Validate duration format
+        try {
+            val duration = durationStr.toDouble()
+            if (duration <= 0) {
+                throw InvalidDurationException(durationStr, "duration must be positive, got $duration")
+            }
+        } catch (e: NumberFormatException) {
+            throw InvalidDurationException(durationStr, "must be a positive number")
+        }
+        
+        i += 2
+    }
+}
+
+fun validateNote(note: String) {
+    // Allow rests (-)
+    if (note == "-") return
+    
+    // Validate note format: [A-G][#b]?\d+
+    val validNoteRegex = Regex("""^[A-G][#b]?-?\d+$""")
+    if (!validNoteRegex.matches(note)) {
+        throw InvalidNoteException(
+            note,
+            "must be in format like 'C4', 'A#4', 'Bb3', or '-' for rest"
+        )
+    }
+    
+    // Try to get frequency to validate it's a known note
+    try {
+        NoteFrequency.frequency(note)
+    } catch (e: Exception) {
+        throw InvalidNoteFrequencyException(note)
+    }
+}
+
 fun readSong(filename: String): Song {
     val file = File(filename)
     
     if (!file.exists()) {
-        throw IllegalArgumentException("File not found: $filename")
+        throw FileSyntaxException(filename, "file not found")
     }
     
     val lines = try {
         file.readLines().filter { it.isNotBlank() }
     } catch (e: Exception) {
-        throw IllegalArgumentException("Failed to read file: ${e.message}")
+        throw FileSyntaxException(filename, "cannot read file", e)
     }
     
     if (lines.isEmpty()) {
-        throw IllegalArgumentException("File is empty.")
+        throw FileSyntaxException(filename, "file is empty")
     }
     
     // Parse header
     val header = lines.first().trim().split(Regex("\\s+"))
     if (header.size != 3) {
-        throw IllegalArgumentException("Header must contain: sampleRate beatsPerMeasure tempo")
+        throw HeaderSyntaxException("expected 3 values (sampleRate beatsPerMeasure tempo), got ${header.size}")
     }
     
     val sampleRate = try {
         header[0].toInt()
     } catch (_: NumberFormatException) {
-        throw IllegalArgumentException("Invalid sampleRate: ${header[0]}")
+        throw HeaderSyntaxException("invalid sampleRate '${header[0]}' - must be an integer")
     }
     
     val beatsPerMeasure = try {
         header[1].toInt()
     } catch (_: NumberFormatException) {
-        throw IllegalArgumentException("Invalid beatsPerMeasure: ${header[1]}")
+        throw HeaderSyntaxException("invalid beatsPerMeasure '${header[1]}' - must be an integer")
     }
     
     val tempo = try {
         header[2].toInt()
     } catch (_: NumberFormatException) {
-        throw IllegalArgumentException("Invalid tempo: ${header[2]}")
+        throw HeaderSyntaxException("invalid tempo '${header[2]}' - must be an integer")
     }
     
     // Parse channels
@@ -47,14 +105,23 @@ fun readSong(filename: String): Song {
         try {
             val parts = line.split('|')
             if (parts.isEmpty()) {
-                throw IllegalArgumentException("Invalid channel line: $line")
+                throw ChannelSyntaxException(lineNum + 2, "empty channel line")
             }
             
             val settings = parts[0].trim().split(Regex("\\s+"))
             val measures = parts.drop(1).map(String::trim).filter { it.isNotEmpty() }
             
             if (settings.isEmpty()) {
-                throw IllegalArgumentException("Channel must specify a waveform")
+                throw ChannelSyntaxException(lineNum + 2, "missing waveform (first token in settings)")
+            }
+            
+            if (measures.isEmpty()) {
+                throw ChannelSyntaxException(lineNum + 2, "channel must have at least one measure")
+            }
+            
+            // Validate all measures have proper structure
+            for ((measureIdx, measure) in measures.withIndex()) {
+                validateMeasure(measure, measureIdx)
             }
             
             val waveform = WaveformFactory.create(settings[0])
@@ -66,8 +133,12 @@ fun readSong(filename: String): Song {
             }
             
             channels.add(channel)
+        } catch (e: SongParsingException) {
+            // Re-throw parsing exceptions as-is
+            throw e
         } catch (e: Exception) {
-            throw IllegalArgumentException("Error parsing channel at line ${lineNum + 2}: ${e.message}")
+            // Wrap unexpected exceptions
+            throw ChannelSyntaxException(lineNum + 2, e.message ?: "unknown error", e)
         }
     }
     
@@ -95,11 +166,14 @@ fun main(args: Array<String>) {
         synthesizer.play()
         
         println("Playback complete!")
-    } catch (e: IllegalArgumentException) {
+    } catch (e: SongParsingException) {
         System.err.println("Error: ${e.message}")
         System.exit(1)
+    } catch (e: SynthesizerException) {
+        System.err.println("Synthesizer error: ${e.message}")
+        System.exit(1)
     } catch (e: Exception) {
-        System.err.println("Error: ${e.message}")
+        System.err.println("Unexpected error: ${e.message}")
         e.printStackTrace()
         System.exit(1)
     }

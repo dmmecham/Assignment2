@@ -14,7 +14,10 @@ class SoundChannel(
             while (i < tokens.size) {
                 val noteDuration = tokens.getOrNull(i + 1)?.toDoubleOrNull()
                 if (noteDuration == null || noteDuration <= 0) {
-                    throw IllegalArgumentException("Invalid note duration")
+                    throw InvalidDurationException(
+                        tokens.getOrNull(i + 1) ?: "null",
+                        "must be a positive number"
+                    )
                 }
                 duration += noteDuration * beatDuration
                 i += 2
@@ -22,6 +25,29 @@ class SoundChannel(
         }
         
         return duration
+    }
+    
+    override fun getNoteBoundaries(song: Song): List<Triple<Int, Int, Int>> {
+        val beatDurationSamples = song.sampleRate * 60.0 / song.tempo
+        val boundaries = mutableListOf<Triple<Int, Int, Int>>()
+        var sampleIndex = 0
+        
+        for (measure in measures) {
+            val tokens = measure.trim().split(Regex("\\s+"))
+            var i = 0
+            while (i < tokens.size) {
+                val duration = tokens.getOrNull(i + 1)?.toDoubleOrNull() ?: 1.0
+                val noteDurationSamples = (duration * beatDurationSamples).toInt()
+                val startSample = sampleIndex
+                val endSample = sampleIndex + noteDurationSamples
+                
+                boundaries.add(Triple(startSample, endSample, noteDurationSamples))
+                sampleIndex = endSample
+                i += 2
+            }
+        }
+        
+        return boundaries
     }
     
     override fun generate(song: Song, duration: Double): DoubleArray {

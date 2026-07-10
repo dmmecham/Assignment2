@@ -34,7 +34,7 @@ sin | C4 1
     
     @Test
     fun testMissingFile() {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<FileSyntaxException> {
             readSong("/nonexistent/file/path.txt")
         }
     }
@@ -43,7 +43,7 @@ sin | C4 1
     fun testEmptyFile() {
         val filename = createTempFile("")
         try {
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWith<FileSyntaxException> {
                 readSong(filename)
             }
         } finally {
@@ -56,7 +56,7 @@ sin | C4 1
         val content = "44100 4"  // Missing tempo
         val filename = createTempFile(content)
         try {
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWith<HeaderSyntaxException> {
                 readSong(filename)
             }
         } finally {
@@ -73,7 +73,7 @@ sin | C4 1
         
         val filename = createTempFile(content)
         try {
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWith<HeaderSyntaxException> {
                 readSong(filename)
             }
         } finally {

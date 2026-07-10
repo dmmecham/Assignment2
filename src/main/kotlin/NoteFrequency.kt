@@ -21,7 +21,7 @@ object NoteFrequency {
         if (note == "-") return null
         val match = Regex("""^([A-G][#b]?)(-?\d+)$""")
             .matchEntire(note)
-            ?: throw IllegalArgumentException("Invalid note: $note")
+            ?: throw InvalidNoteFrequencyException(note)
 
         val (pitch, octaveString) = match.destructured
         val octave = octaveString.toInt()

@@ -5,6 +5,7 @@ object WaveformFactory {
             "sin" -> SineWaveStrategy()
             "square" -> SquareWaveStrategy()
             "whitenoise" -> WhiteNoiseStrategy()
-            else -> error("Unknown waveform: $type")
+            else -> throw UnknownWaveformException(type)
         }
 }
+
